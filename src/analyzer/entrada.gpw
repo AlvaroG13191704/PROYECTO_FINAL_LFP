@@ -1,3 +1,4 @@
+/*Comentario*/
 <!--Controles
 Contenedor contlogin;
 Contenedor contFondo;
@@ -16,6 +17,7 @@ contlogin.setAncho(190);
 contlogin.setAlto(150);
 contlogin.setColorFondo(47,79,79);
 contFondo.setAncho(800);
+/*Comentario*/
 contFondo.setAlto(100);
 contFondo.setColorFondo(64,64,64);
 cmdIngresar.setTexto("Ingresar");

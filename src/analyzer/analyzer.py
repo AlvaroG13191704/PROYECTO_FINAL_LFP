@@ -1,8 +1,10 @@
 # imports
 import string
+from tkinter import messagebox
 
 from src.components.ColocationClass import ColocationClass
 from src.components.PropertyClass import PropertyClass
+from src.components.Tokens import Tokens
 from src.components.controller_class import ControlersClass
 
 letters = list(string.ascii_letters)
@@ -61,6 +63,7 @@ def verified_numbers(string: str):
 
 class Analyzer:
     def __init__(self):
+        self.state = False
         self.line = 0
         self.col = 0
         self.tmp_string = ""
@@ -78,6 +81,29 @@ class Analyzer:
         self.colocation = None
         self.values_colocation = []
         self.colocations_list = []
+        # save tokens
+        self.token_list = []
+
+    def show_error(self, token, type ):
+        messagebox.showerror(message=f'{self.line} | {self.col} | {token} | {type}', title='ERROR!')
+    def multiLinealComents(self, string: str):
+        try:
+            tmp = ""
+            count = 0
+            key = False
+            if string[0] == "/" and string[1] == "*":
+                for i in string:
+                    if key:
+                        tmp += i
+                    if string[count-1] == "*" and string[count] == "/":
+                        key = True
+                    count += 1
+                print(f'{self.line} | {self.col} | "Comentario multilinea" ')
+                self.next_line()
+                return tmp
+            return string
+        except:
+            return string
 
     def next_line(self):
         tmp = self.string_list[self.line]
@@ -123,27 +149,36 @@ class Analyzer:
         self.initialState = next_state
         # increment line
         self.next_line()
+        # add token
+        token = Tokens(token, string)
+        self.token_list.append(token)
         return string
 
     def read_states(self, string):
         self.initialState = 'S0'
         while string != "":  # while the string ins´t empty
             if self.initialState == "S0":  # If initial state is the state, define the token
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('<', string, 'S1')
 
             elif self.initialState == "S1":
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('!', string, 'S2')
 
             elif self.initialState == "S2":
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('-', string, 'S3')
 
             elif self.initialState == "S3":
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('-', string, 'S4')
 
             elif self.initialState == "S4":
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('Controles', string, 'S5')
 
             elif self.initialState == "S5":
+                string = self.multiLinealComents(string)
                 token = 'Controles'
                 res = self.verified_token(string, token)
                 # verified an error
@@ -161,7 +196,7 @@ class Analyzer:
 
                 # verified an error
                 if res['result'] is None:
-                    print('ERROR - GUARDAR ERROR')
+                    self.show_error(token, 'ERROR LÉXICO')
                     break
                 # print
                 print(f'{self.line} | {self.col} | {token}')
@@ -170,8 +205,12 @@ class Analyzer:
                 self.col += res['count']
                 # increment line
                 self.next_line()
+                # add token
+                token_obj = Tokens(token, string)
+                self.token_list.append(token_obj)
 
             elif self.initialState == 'S6':
+                string = self.multiLinealComents(string)
                 tmp = string.split(";")
                 id = tmp[0]
                 verified_alfabet(id)
@@ -181,14 +220,21 @@ class Analyzer:
                 self.controlers_list.append(controler)
 
                 print(f'{self.line} | {self.col} | {id}')
+                # add token
+                token_obj = Tokens(id, string)
+                self.token_list.append(token_obj)
+
                 self.tmp_string += id
                 string = remove(string, id)
                 self.initialState = 'S7'
 
+
             elif self.initialState == 'S7':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state(';', string, 'S8')
 
             elif self.initialState == 'S8':
+                string = self.multiLinealComents(string)
                 separate = string.split(';')
                 if separate[0] != 'Controles':
                     self.initialState = 'S5'
@@ -196,32 +242,41 @@ class Analyzer:
                     string = self.analyze_state('Controles', string, 'S9')
 
             elif self.initialState == 'S9':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('-', string, 'S10')
 
             elif self.initialState == 'S10':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('-', string, 'S11')
 
             elif self.initialState == 'S11':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('>', string, 'q0')
                 print('Fin del primer arbol')
 
             # now read the second part
             elif self.initialState == 'q0':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('<', string, 'q1')
 
             elif self.initialState == 'q1':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('!', string, 'q2')
 
             elif self.initialState == 'q2':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('-', string, 'q3')
 
             elif self.initialState == 'q3':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('-', string, 'q4')
 
             elif self.initialState == 'q4':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('propiedades', string, 'q5')
 
             elif self.initialState == 'q5':
+                string = self.multiLinealComents(string)
                 token = 'propiedades'
                 res = self.verified_token(string, token)
                 # verified an error
@@ -239,7 +294,7 @@ class Analyzer:
 
                 # verified an error
                 if res['result'] is None:
-                    print('ERROR - SINTATICO- La variable no esta declarada')
+                    self.show_error(token, 'ERROR - SINTATICO- La variable no esta declarada')
                     break
                 # print
                 print(f'{self.line} | {self.col} | {token}')
@@ -248,11 +303,16 @@ class Analyzer:
                 self.col += res['count']
                 # increment line
                 self.next_line()
+                # add token
+                token_obj = Tokens(token, string)
+                self.token_list.append(token_obj)
 
             elif self.initialState == 'q6':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('.', string, 'q7')
 
             elif self.initialState == 'q7':
+                string = self.multiLinealComents(string)
                 value = None
                 values = None
                 tmp = string.split('(')
@@ -265,13 +325,15 @@ class Analyzer:
                     self.property_value = value
                     string = self.analyze_state(value, string, 'q8')
                 else:
-                    print('ERROR - SINTACTICO - LA PROPIERDAD NO CORRESPONDE')
+                    self.show_error(token, 'ERROR - SINTACTICO - LA PROPIERDAD NO CORRESPONDE')
                     break
 
             elif self.initialState == 'q8':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('(', string, 'q9')
 
             elif self.initialState == 'q9':
+                string = self.multiLinealComents(string)
                 tmp = string.split(')')
                 value = tmp[0].split(',')
                 verified_numbers(value[0])
@@ -279,45 +341,56 @@ class Analyzer:
                 self.values_prop.append(value[0])
 
                 print(f'{self.line} | {self.col} | {value[0]}')
+                # add token
+                token_obj = Tokens(value[0], string)
+                self.token_list.append(token_obj)
+
                 self.tmp_string += value[0]
                 string = remove(string, value[0])
                 self.initialState = 'q10'
                 self.next_line()
 
             elif self.initialState == 'q10':
+                string = self.multiLinealComents(string)
                 tmp = string.split(')')
                 if self.property_value == 'setTexto' or self.property_value == 'setAlineacion' or self.property_value == 'setMarcada' or \
                         self.property_value == 'setGrupo' or self.property_value == 'setAncho' or self.property_value == 'setAlto':
                     if tmp[0] == '':
                         string = self.analyze_state(')', string, 'q13')
                     else:
-                        print(f'Propiedad -> {self.property_value} solo acepta un valor')
+                        self.show_error(tmp[0], f'ERROR - Propiedad -> {self.property_value} solo acepta un valor')
                         break
 
                 elif self.property_value == 'setColorLetra' or self.property_value == 'setColorFondo':
                     if tmp[0] != '':
                         string = self.analyze_state(',', string, 'q11')
                     else:
-                        print(f'Propiedad -> {self.property_value} necesita 3 valores')
+                        print(f'')
+                        self.show_error(tmp[0], f'ERROR -Propiedad -> {self.property_value} necesita 3 valores')
                         break
                 else:
-                    print('Tienen más valores')
+                    self.show_error(tmp[0], f'ERROR -Tiene más valores')
                     break
 
             elif self.initialState == 'q11':
+                string = self.multiLinealComents(string)
                 tmp = string.split(')')
                 value = tmp[0].split(',')
                 verified_numbers(value[0])
                 # Save the property with their value
                 self.values_prop.append(value[0])
-
                 print(f'{self.line} | {self.col} | {value[0]}')
+                # add token
+                token_obj = Tokens(value[0], string)
+                self.token_list.append(token_obj)
+
                 self.tmp_string += value[0]
                 string = remove(string, value[0])
                 self.initialState = 'q12'
                 self.next_line()
 
             elif self.initialState == 'q12':
+                string = self.multiLinealComents(string)
                 token = ')'
                 res = self.verified_token(string, token)
                 # verified an error
@@ -330,6 +403,7 @@ class Analyzer:
                     string = self.analyze_state(')', string, 'q13')
 
             elif self.initialState == 'q13':
+                string = self.multiLinealComents(string)
                 # create the object or find the property already created
                 property_obj = PropertyClass(self.property, self.property_value, self.values_prop)
                 self.properties_list.append(property_obj)
@@ -337,6 +411,7 @@ class Analyzer:
                 string = self.analyze_state(';', string, 'q14')
 
             elif self.initialState == 'q14':
+                string = self.multiLinealComents(string)
                 separate = string.split(';')
                 if separate[0] != 'propiedades':
                     self.initialState = 'q5'
@@ -345,32 +420,41 @@ class Analyzer:
                     string = self.analyze_state('propiedades', string, 'q15')
 
             elif self.initialState == 'q15':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('-', string, 'q16')
 
             elif self.initialState == 'q16':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('-', string, 'q17')
 
             elif self.initialState == 'q17':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('>', string, 't0')
                 print('Fin del segundo arbol')
 
             # now read the last part
             elif self.initialState == 't0':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('<', string, 't1')
 
             elif self.initialState == 't1':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('!', string, 't2')
 
             elif self.initialState == 't2':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('-', string, 't3')
 
             elif self.initialState == 't3':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('-', string, 't4')
 
             elif self.initialState == 't4':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('Colocacion', string, 't5')
 
             elif self.initialState == 't5':
+                string = self.multiLinealComents(string)
                 token = 'Colocacion'
                 res = self.verified_token(string, token)
                 # verified an error
@@ -396,7 +480,7 @@ class Analyzer:
 
                 # verified an error
                 if res['result'] is None:
-                    print('ERROR - SINTATICO- La variable no esta declarada')
+                    self.show_error(token, 'ERROR - SINTATICO- La variable no esta declarada')
                     break
                 # print
                 print(f'{self.line} | {self.col} | {token}')
@@ -405,11 +489,16 @@ class Analyzer:
                 self.col += res['count']
                 # increment line
                 self.next_line()
+                # add token
+                token_obj = Tokens(token, string)
+                self.token_list.append(token_obj)
 
             elif self.initialState == 't6':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('.', string, 't7')
 
             elif self.initialState == 't7':
+                string = self.multiLinealComents(string)
                 token = 'add'
                 res = self.verified_token(string, token)
                 # verified an error
@@ -426,7 +515,7 @@ class Analyzer:
 
                 # verified an error
                 if res['result'] is None:
-                    print('ERROR - SINTATICO- La variable no esta declarada')
+                    self.show_error(token, 'ERROR - SINTATICO- La propiedad no existe ')
                     break
                 # print
                 print(f'{self.line} | {self.col} | {token}')
@@ -435,25 +524,36 @@ class Analyzer:
                 self.col += res['count']
                 # increment line
                 self.next_line()
+                # add token
+                token_obj = Tokens(token, string)
+                self.token_list.append(token_obj)
 
             elif self.initialState == 't8':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('(', string, 't10')
 
             elif self.initialState == 't9':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('(', string, 't11')
 
             elif self.initialState == 't10':
+                string = self.multiLinealComents(string)
                 tmp = string.split(")")
                 value = tmp[0].split(',')
                 verified_numbers(value[0])
                 # append to the value list
                 self.values_colocation.append(value[0])
                 print(f'{self.line} | {self.col} | {value[0]}')
+                # add token
+                token_obj = Tokens(value[0], string)
+                self.token_list.append(token_obj)
+
                 self.tmp_string += value[0]
                 string = remove(string, value[0])
                 self.initialState = 't12'
 
             elif self.initialState == 't11':
+                string = self.multiLinealComents(string)
                 state = True
                 tmp = string.split(")")
                 value = tmp[0].split(',')
@@ -462,34 +562,45 @@ class Analyzer:
                     if value[0] == i.id:
                         state = False
                 if state:
-                    print('ERROR - SINTATICO- La variable no esta declarada')
+                    self.show_error(value[0], 'ERROR - SINTATICO- La variable no esta declarada')
                     break
                 # append to the value list
                 self.values_colocation.append(value[0])
                 print(self.values_colocation)
                 print(f'{self.line} | {self.col} | {value[0]}')
+                # add token
+                token_obj = Tokens(value[0], string)
+                self.token_list.append(token_obj)
+
                 self.tmp_string += value[0]
                 string = remove(string, value[0])
                 self.initialState = 't13'
 
             elif self.initialState == 't12':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state(',', string, 't14')
 
             elif self.initialState == 't13':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state(')', string, 't15')
 
             elif self.initialState == 't14':
+                string = self.multiLinealComents(string)
                 tmp = string.split(")")
                 verified_numbers(tmp[0])
                 # append to the value list
                 self.values_colocation.append(tmp[0])
-
                 print(f'{self.line} | {self.col} | {tmp[0]}')
+                # add token
+                token_obj = Tokens(tmp[0], string)
+                self.token_list.append(token_obj)
+
                 self.tmp_string += tmp[0]
                 string = remove(string, tmp[0])
                 self.initialState = 't13'
 
             elif self.initialState == 't15':
+                string = self.multiLinealComents(string)
                 # create the object or find the property already created
                 print(self.property, self.colocation, self.values_colocation)
                 if self.colocation == 'setPosicion':
@@ -502,16 +613,24 @@ class Analyzer:
                 self.values_colocation = []
 
             elif self.initialState == 't16':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('-', string, 't17')
 
             elif self.initialState == 't17':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('-', string, 't18')
 
             elif self.initialState == 't18':
+                string = self.multiLinealComents(string)
                 string = self.analyze_state('>', string, 't19')
+                self.state = True
 
-        # generate css
-        self.generate_css()
+        if self.state:
+            # show mesage
+            messagebox.showinfo(message='Se ha analizado el contenido', title='Analizador')
+            # generate css
+            #self.generate_css()
+            self.generate_html()
 
     def generate_css(self):
         css = ''
@@ -531,14 +650,50 @@ class Analyzer:
 }'''
         print(css)
 
+    def generate_html(self):
+        list_divs = []
+        html = '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado</title>
+</head>
+<body>'''
 
+        for i in self.colocations_list:
+            container = i
+            print(f'{container.controler_id} - {container.add} - {container.value}')
+            # -----
+            # global divs
+            if container.controler_id == 'this':
+                for j in self.controlers_list:
+                    controler = j
 
-    def compile(self):
+                    if container.value[0] == controler.id:
+                        data = ''
+                        for h in self.colocations_list:
+                            if container.value[0] == h.controler_id:
+                                print(f'Se repite {h.controler_id} en la parte antes de add y se le agrega -> {h.value[0]}')
+                                for c in self.controlers_list:
+                                    if h.value[0] == c.id:
+                                        if c.control == 'Contenedor':
+                                            value = c.container_control()
+                                            data += value
+
+                        html += f'''
+{controler.container_control(data)}'''
+
+        html += '''
+</body>
+</html>'''
+        print(html)
+
+    def compile(self, value):
         # read the file or the content
-        file = open('entrada.gpw', 'r')
-        content = file.readlines()
-        file.close()
-
+        content = value.split('\n')
         # Clean data
         new_string = ""
         string_list = []
@@ -551,13 +706,7 @@ class Analyzer:
                 string_list.append(i)
 
         # print values
-        print(new_string)
-        print(string_list)
         self.string_list = string_list
         # execute
         self.read_states(new_string)
 
-
-if __name__ == '__main__':
-    a = Analyzer()
-    a.compile()

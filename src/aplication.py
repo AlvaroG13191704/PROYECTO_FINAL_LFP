@@ -1,5 +1,8 @@
 import tkinter as tk
+from tkinter import messagebox, filedialog, ttk
 from tkinter.filedialog import askopenfile, asksaveasfilename
+
+from src.analyzer.analyzer import Analyzer
 
 
 # gui
@@ -17,6 +20,8 @@ class GUI(tk.Tk):
         self.open_file = None
         # create components
         self._create_components()
+        # tokens
+        self.list_tokens = []
 
     def _create_components(self):
         btns = tk.Frame(self, relief=tk.RAISED, bd=4)
@@ -46,14 +51,58 @@ class GUI(tk.Tk):
 
     # Functions
     def analyze(self):
-        pass
+        compiler = Analyzer()
+        compiler.compile(self.text_area.get(1.0, tk.END))
+        self.list_tokens = compiler.token_list
+
 
     def see_tokens(self):
-        pass
+        list_window = tk.Toplevel(self)
+        list_window.geometry('660x300+200+200')
+        list_window.title('Listado de tokens')
+        self.withdraw()
+        # Table
+        columns = ('No.', 'Token', 'Lexema')
+        tree = ttk.Treeview(list_window, columns=columns, show='headings')
+        # Define headings
+        tree.heading('No.', text='Número')
+        tree.heading('Token', text='Token')
+        tree.heading('Lexema', text='Lexema')
+        # Contact the values
+        courses = []
+        for i in range(len(self.list_tokens)):
+            courses.append((
+                f'{i+1}',
+                f'{self.list_tokens[i].token}',
+                f'{self.list_tokens[i].lexema}'
+            ))
+        # add data to the treeview
+        for c in courses:
+            tree.insert('', tk.END, values=c)
+
+        tree.grid(row=0, column=0, sticky='nsew', padx=23, pady=10, ipadx=5, ipady=5)
+
+        # button
+        def back():
+            self.deiconify()
+            list_window.destroy()
+
+        btn_back = tk.Button(list_window, text='Regresar', command=back, height=2, width=15)
+        btn_back.grid(row=10)
 
     # Buttons Functions
     def new_file(self):
-        pass
+        new_content = self.text_area.get(1.0, tk.END)
+        if new_content != "" and new_content != "\n":
+            messagebox.askyesno(message="¿Desea guardar los cambios?", title="AVISO")
+            if True:
+                new_content = self.text_area.get(1.0, tk.END)
+                new_file = filedialog.asksaveasfile(title='Guardar archivo...', defaultextension='.txt', filetypes=(('txt files', '*.gpw'),))
+                if self.text_area != None:
+                    new_file.write(f"{new_content}")
+                    new_file.close()
+
+                    self.text_area.delete(1.0, tk.END)
 
     def found_file(self):
         # Open the file window

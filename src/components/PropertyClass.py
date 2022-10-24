@@ -10,7 +10,11 @@ class PropertyClass:
 
         if self.property == 'setPosicion':
             css = f'''
-    position: absolute; left: {self.value[0]}px; top: {self.value[1]}px;'''
+    position: absolute; 
+    left: {self.value[0]}px; 
+    top: {self.value[1]}px;
+    font-size: 12px;'''
+
             return css
 
         elif self.property == 'setAncho':

@@ -4,3 +4,5 @@ class ColocationClass:
         self.controler_id = controler_id
         self.add = add
         self.value = value
+
+
