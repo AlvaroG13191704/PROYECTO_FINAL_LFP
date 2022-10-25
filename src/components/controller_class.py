@@ -27,36 +27,40 @@ class ControlersClass:
     # this functions received some parameters to build the html
     def label_control(self, text=""):
         return f'''
-    <label id="{self.id}">{text}</label>'''
+    <label id="{self.id}">{text.replace('"','')}</label>'''
 
-    def button_control(self, text="", align='center'):
+    def button_control(self, text="", align='left'):
         return f'''
-    <input type="submit" id="{self.id} value="{text}" style:"text-align:{align}"/> '''
+    <input type="submit" id="{self.id}" value={text.replace('"','')} style="text-align:{align}"/> '''
 
-    def check_control(self, check=False):
+    def check_control(self, check=False, text=""):
         checked = ''
         if check:
             checked = 'checked'
         return f'''
-    <input type="checkbox" id={self.id} {checked} /> '''
+    <input type="checkbox" id={self.id} {checked} />{text.replace('"','')} '''
 
-    def radioButton_control(self, check=False):
+    def radioButton_control(self, check=False, group="", text=""):
         checked = ''
         if check:
             checked = 'checked'
         return f'''
-    <input type="radio" name="{self.id}" id="{self.id}" {checked} /> '''
+    <input type="radio" name="{group}" id="{self.id}" {checked} />{text.replace('"','')} '''
 
     def textArea_control(self, text=""):
         return f'''
-    <textarea id="{self.id}"> {text} </textarea>'''
+    <textarea id="{self.id}"> {text.replace('"','')} </textarea>'''
 
-    def key_control(self, text='', align="center"):
+    def key_control(self, text='', align="left"):
         return f'''
-    <input type="password" id="{self.id}" value="{text}" style="text-align:{align}" /> '''
+    <input type="password" id="{self.id}" value={text} style="text-align:{align}" /> '''
 
     def container_control(self, control=""):
         return f'''
     <div id="{self.id}"> 
         {control}
     </div> '''
+
+    def text_control(self, text="", align="left"):
+        return f'''
+    <input type="text" id="{self.id}" value={text} style="text-align:{align}" /> '''

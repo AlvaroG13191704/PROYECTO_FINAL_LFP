@@ -12,9 +12,7 @@ class PropertyClass:
             css = f'''
     position: absolute; 
     left: {self.value[0]}px; 
-    top: {self.value[1]}px;
-    font-size: 12px;'''
-
+    top: {self.value[1]}px;'''
             return css
 
         elif self.property == 'setAncho':
@@ -40,3 +38,10 @@ class PropertyClass:
         elif self.property == 'setTexto':
             return ''
 
+        elif self.property == 'setMarcada':
+            return ''
+
+        elif self.property == 'setGrupo':
+            return ''
+        elif self.property == 'setAlineacion':
+            return ''

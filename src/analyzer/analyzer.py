@@ -183,7 +183,7 @@ class Analyzer:
                 res = self.verified_token(string, token)
                 # verified an error
                 if res['result'] is None:
-                    tokens = ['Etiqueta', 'Boton', 'Check', 'RadioBoton', 'Texto', ' AreaTexto', 'Clave', 'Contenedor']
+                    tokens = ['Etiqueta', 'Boton', 'Check', 'RadioBoton', 'Texto', 'AreaTexto', 'Clave', 'Contenedor']
                     for i in tokens:
                         res = self.verified_token(string, i)
                         if res['result'] is not None:
@@ -629,26 +629,32 @@ class Analyzer:
             # show mesage
             messagebox.showinfo(message='Se ha analizado el contenido', title='Analizador')
             # generate css
-            #self.generate_css()
+            self.generate_css()
             self.generate_html()
 
+    #fix some problems
     def generate_css(self):
         css = ''
         for i in self.controlers_list:
-            controler_id = i.id
-            css += f'''
+            if i.control == 'Check' or i.control == 'RadioBoton':
+                pass
+            else:
+                controler_id = i.id
+                css += f'''
 #{controler_id}'''
-            css += '''
+                css += '''
 {'''
-            for j in self.properties_list:
-                property_control = j
-                if controler_id == property_control.control_id:
-                    css += f'''
-    {property_control.css_style()}
-                    '''
-            css += '''
+                for j in self.properties_list:
+                    property_control = j
+                    if controler_id == property_control.control_id:
+                        css += f'''
+    {property_control.css_style()}'''
+                css += '''
 }'''
-        print(css)
+        #print(css)
+        document = open("pagina.css", 'w')
+        document.write(css)
+        document.close()
 
     def generate_html(self):
         list_divs = []
@@ -660,36 +666,155 @@ class Analyzer:
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resultado</title>
+    <link href="pagina.css" rel="stylesheet" type="text/css" />
 </head>
 <body>'''
 
         for i in self.colocations_list:
             container = i
-            print(f'{container.controler_id} - {container.add} - {container.value}')
             # -----
             # global divs
             if container.controler_id == 'this':
                 for j in self.controlers_list:
                     controler = j
-
                     if container.value[0] == controler.id:
                         data = ''
                         for h in self.colocations_list:
                             if container.value[0] == h.controler_id:
-                                print(f'Se repite {h.controler_id} en la parte antes de add y se le agrega -> {h.value[0]}')
+
                                 for c in self.controlers_list:
                                     if h.value[0] == c.id:
                                         if c.control == 'Contenedor':
-                                            value = c.container_control()
+                                            # call a function
+                                            data_2 = ''
+                                            for c_2 in self.colocations_list:
+                                                if c.id == c_2.controler_id:
+
+                                                    for ids in self.controlers_list:
+                                                        if ids.id == c_2.value[0]:
+                                                            # another container
+                                                            if ids.control == 'Contenedor':
+                                                                data_3 = ''
+
+                                                                for cc_ in self.colocations_list:
+                                                                    if ids.id == cc_.controler_id:
+
+                                                                        for ids_2 in self.controlers_list:
+                                                                            if ids_2.id == cc_.value[0]:
+                                                                                # search for props
+                                                                                if ids_2.control == 'RadioBoton':
+
+                                                                                    marca = None
+                                                                                    group = None
+                                                                                    text = None
+                                                                                    for p in self.properties_list:
+                                                                                        if p.control_id == cc_.value[0]:
+                                                                                            if p.property == 'setMarcada':
+                                                                                                marca = p.value[0]
+                                                                                            elif p.property == 'setGrupo':
+                                                                                                group = p.value[0]
+                                                                                            elif p.property == 'setTexto':
+                                                                                                text = p.value[0]
+
+                                                                                    radioButton_value = ids_2.radioButton_control(marca,group,text)
+                                                                                    data_3 += radioButton_value
+
+                                                                                elif ids_2.control == 'Check':
+
+                                                                                    marca = None
+
+                                                                                    text = None
+                                                                                    for p in self.properties_list:
+                                                                                        if p.control_id == cc_.value[0]:
+                                                                                            if p.property == 'setMarcada':
+                                                                                                marca = p.value[0]
+
+                                                                                            elif p.property == 'setTexto':
+                                                                                                text = p.value[0]
+
+                                                                                    check_value = ids_2.check_control(marca, text)
+                                                                                    data_3 += check_value
+                                                                # create the container
+                                                                container_value = ids.container_control(data_3)
+                                                                data_2 += container_value
+                                                            # evaluate values
+                                                            if ids.control == 'Etiqueta':
+                                                                prop = None
+                                                                for p in self.properties_list:
+                                                                    if p.control_id == c_2.value[0]:
+                                                                        if p.property == 'setTexto':
+                                                                            prop = p.value[0]
+                                                                label_value = ids.label_control(prop)
+                                                                data_2 += label_value
+                                                            # next controler
+                                                            elif ids.control == 'Texto':
+                                                                prop = None
+                                                                prop_2 = None
+                                                                for p in self.properties_list:
+                                                                    if p.control_id == c_2.value[0]:
+                                                                        if p.property == 'setTexto':
+                                                                            prop = p.value[0]
+                                                                        elif p.property == 'setAlineacion':
+                                                                            if p.value[0] == 'Izquierdo':
+                                                                                prop_2 = 'left'
+                                                                            elif p.value[0] == 'Centro':
+                                                                                prop_2 = 'center'
+                                                                            elif p.value[0] == 'Derecho':
+                                                                                prop_2 = 'right'
+                                                                key_value = ids.text_control(prop, prop_2)
+                                                                data_2 += key_value
+                                                            # next
+                                                            elif ids.control == 'Clave':
+                                                                prop = None
+                                                                prop_2 = None
+                                                                for p in self.properties_list:
+                                                                    if p.control_id == c_2.value[0]:
+                                                                        if p.property == 'setTexto':
+                                                                            prop = p.value[0]
+                                                                        elif p.property == 'setAlineacion':
+                                                                            if p.value[0] == 'Izquierdo':
+                                                                                prop_2 = 'left'
+                                                                            elif p.value[0] == 'Centro':
+                                                                                prop_2 = 'center'
+                                                                            elif p.value[0] == 'Derecho':
+                                                                                prop_2 = 'right'
+                                                                key_value = ids.key_control(prop,prop_2)
+                                                                data_2 += key_value
+                                                            # areaText
+                                                            elif ids.control == 'AreaTexto':
+                                                                prop = None
+                                                                for p in self.properties_list:
+                                                                    if p.control_id == c_2.value[0]:
+                                                                        if p.property == 'setTexto':
+                                                                            prop = p.value[0]
+                                                                key_value = ids.textArea_control(prop)
+                                                                data_2 += key_value
+                                            value = c.container_control(data_2)
                                             data += value
 
+                                        elif c.control == 'Boton':
+                                            id = None
+                                            value_pro = None
+                                            for b in self.controlers_list:
+                                                if c.control == b.control:
+                                                    id = b.id
+
+                                            for p in self.properties_list:
+                                                if p.control_id == id:
+                                                    if p.property == 'setTexto':
+                                                        value_pro = p.value[0]
+                                            value = c.button_control(value_pro)
+                                            data += value
                         html += f'''
 {controler.container_control(data)}'''
 
         html += '''
 </body>
 </html>'''
-        print(html)
+        #print(html)
+        document = open("pagina.html", 'w')
+        document.write(html)
+        document.close()
 
     def compile(self, value):
         # read the file or the content
